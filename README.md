@@ -1,1 +1,1 @@
-#Here's my screeps code. Nothing more.
+Here's my screeps code. Nothing more.
