@@ -60,17 +60,33 @@ var roleHarvester = {
             }
         }
         else {
-            if (!creep.memory.structToGo) {
-                try {
-                    creep.memory.structToGo = creep.pos.findClosestByPath(FIND_MY_STRUCTURES, 
-                                                            {filter: (s) => (s.structureType == STRUCTURE_SPAWN ||
-                                                                    s.structureType == STRUCTURE_EXTENSION) && 
-                                                                    s.energy < s.energyCapacity}).id;
-                } catch (e) {}
+            if (!creep.memory.spawningStruct && creep.room.memory.roomStructures) {
+                let roomStructures = creep.room.memory.roomStructures[STRUCTURE_SPAWN].concat(creep.room.memory.roomStructures[STRUCTURE_EXTENSION], 
+                                        creep.room.memory.roomStructures[STRUCTURE_TOWER]);
+                if (roomStructures) {
+                    let sType = null;
+                    let structure = null;
+                    let range = 1000;
+                    for (let id of roomStructures) {
+                        str = Game.getObjectById(id);
+                        let r2 = creep.pos.getRangeTo(str);
+                        if (r2 < range && str.energy < str.energyCapacity) {
+                            structure = id;
+                            range = r2;
+                            sType = str.structureType;
+                            if (r2 <= 3) {
+                                break;
+                            }
+                        }
+                    }
+                    if (structure) {
+                        creep.memory.spawningStruct = structure;
+                    }
+                }
             }
-            let struct = Game.getObjectById(creep.memory.structToGo);
+            let struct = Game.getObjectById(creep.memory.spawningStruct);
             if (struct && struct.energy == struct.energyCapacity) {
-                delete creep.memory.structToGo;
+                delete creep.memory.spawningStruct;
                 return
             }
             if (struct) {
