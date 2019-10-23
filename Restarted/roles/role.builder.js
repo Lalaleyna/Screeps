@@ -29,14 +29,6 @@ var roleBuilder = {
             creep.memory.building = false;
         }
         if (creep.carry.energy == creep.carryCapacity) {
-            if (!creep.memory.structToGo) {
-                try {
-                    creep.memory.structToGo = creep.pos.findClosestByRange(FIND_CONSTRUCTION_SITES).id;
-                } catch (e) {}
-            }
-            if (!creep.memory.structToGo) {
-                creep.suicide();
-            }
             creep.memory.building = true;
         }
         if (creep.memory.building == false) {
@@ -65,7 +57,15 @@ var roleBuilder = {
             }
         }
         else {
-        	var building = Game.getObjectById(creep.memory.structToGo)
+            if (!creep.memory.structToGo) {
+                try {
+                    creep.memory.structToGo = creep.pos.findClosestByRange(FIND_CONSTRUCTION_SITES).id;
+                } catch (e) {}
+                if (!creep.memory.structToGo) {
+                    creep.suicide();
+                }
+            }
+        	let building = Game.getObjectById(creep.memory.structToGo)
             if (!building) {
                 delete creep.memory.structToGo;
                 return
