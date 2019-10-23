@@ -1,5 +1,3 @@
-var roleHarvester = require('role.harvester');
-
 var roleRepairer = {
 	run: function (creep) {
 		/*if (creep.signController(creep.room.controller, 'The property of Lalaleyna.') == ERR_NOT_IN_RANGE) {
@@ -14,17 +12,6 @@ var roleRepairer = {
         }
 
         if (creep.carry.energy == creep.carryCapacity) {
-        	if (!creep.memory.structToGo) {
-	            try {
-	                creep.memory.structToGo = creep.pos.findClosestByPath(FIND_STRUCTURES, 
-	                        				{filter: (s) => ((s.structureType == STRUCTURE_ROAD || s.structureType == STRUCTURE_CONTAINER) 
-	                        																			&& s.hits < s.hitsMax * 0.8) ||
-	                                						((s.structureType == STRUCTURE_WALL || s.structureType == STRUCTURE_RAMPART) 
-	                                																			  && s.hits < 10000) ||
-	                                						(s.structureType != STRUCTURE_ROAD && s.structureType != STRUCTURE_CONTAINER &&
-	                               		s.structureType != STRUCTURE_RAMPART && s.structureType != STRUCTURE_WALL && s.hits < s.hitsMax)}).id;
-	            } catch (e) {}
-        	}
             creep.memory.harvesting = false 
         }
         else if (creep.carry.energy == 0) {
@@ -74,10 +61,16 @@ var roleRepairer = {
                 }
             }
         } else {
+        	if (!creep.memory.structToGo && creep.room.memory.requireRepair) {
+	            let requireRepair = creep.room.memory.requireRepair;
+	            let theStruct = requireRepair[0];
+	            creep.room.memory.requireRepair.shift();
+	            creep.memory.structToGo = theStruct;
+        	}
         	let struct = Game.getObjectById(creep.memory.structToGo);
         	if (struct) {
         		if (((struct.structureType == STRUCTURE_ROAD || struct.structureType == STRUCTURE_CONTAINER) && struct.hits >= struct.hitsMax * 0.8) 
-        			|| ((struct.structureType == STRUCTURE_WALL || struct.structureType == STRUCTURE_RAMPART) && struct.hits >= 10000)) {
+        			|| ((struct.structureType == STRUCTURE_WALL || struct.structureType == STRUCTURE_RAMPART) && struct.hits >= 20000)) {
         				delete creep.memory.structToGo;
         				return
         			}
@@ -87,13 +80,28 @@ var roleRepairer = {
 	                creep.moveTo(struct);
 	            }
         	} else {
-	            if (!creep.memory.spawningStruct) {
-	                try {
-	                    creep.memory.spawningStruct = creep.pos.findClosestByPath(FIND_MY_STRUCTURES, 
-	                                                            {filter: (s) => (s.structureType == STRUCTURE_SPAWN ||
-	                                                                    s.structureType == STRUCTURE_EXTENSION) && 
-	                                                                    s.energy < s.energyCapacity}).id;
-	                } catch (e) {}
+	            if (!creep.memory.spawningStruct && creep.room.memory.roomStructures) {
+	                let roomStructures = creep.room.memory.roomStructures[STRUCTURE_SPAWN].concat(creep.room.memory.roomStructures[STRUCTURE_EXTENSION]);
+	                if (roomStructures) {
+	                    let sType = null;
+	                    let structure = null;
+	                    let range = 1000;
+	                    for (let id of roomStructures) {
+	                        str = Game.getObjectById(id);
+	                        let r2 = creep.pos.getRangeTo(str);
+	                        if (r2 < range && str.energy < str.energyCapacity) {
+	                            structure = id;
+	                            range = r2;
+	                            sType = str.structureType;
+	                            if (r2 <= 3) {
+	                                break;
+	                            }
+	                        }
+	                    }
+	                    if (structure) {
+	                        creep.memory.spawningStruct = structure;
+	                    }
+	                }
 	            }
 	            let structToGo = Game.getObjectById(creep.memory.spawningStruct);
 	            if (structToGo && structToGo.energy == structToGo.energyCapacity) {
