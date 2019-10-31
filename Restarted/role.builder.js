@@ -19,22 +19,24 @@ var roleBuilder = {
                         }
                     }
                 }
-                if ((creep.room.find(FIND_MY_CREEPS, {filter: c => (c.memory.sourceToHarv == source.id)}).length) < 2 * pointsEmpty) {
+                if ((creep.room.find(FIND_MY_CREEPS, {filter: c => (c.memory.sourceToHarv == source.id)}).length) < 1 + pointsEmpty) {
                     creep.memory.sourceToHarv = source.id
                     break
                 }
             }
         }
-        if (creep.carry.energy == 0) {
-            creep.memory.building = false;
+        
+        if (_.sum(creep.store) == creep.store.getCapacity()) {
+            creep.memory.building = true
         }
-        if (creep.carry.energy == creep.carryCapacity) {
-            creep.memory.building = true;
+        if (_.sum(creep.store) == 0) {
+            creep.memory.building = false
         }
+
         if (creep.memory.building == false) {
             if (!creep.memory.ruinToGo && !creep.memory.fuckRuins) {
                 try {
-                    creep.memory.ruinToGo = creep.pos.findClosestByPath(FIND_RUINS, {filter: (r) => r.store[RESOURCE_ENERGY] > 0}).id;
+                creep.memory.ruinToGo = creep.pos.findClosestByPath(FIND_RUINS, {filter: (r) => r.store[RESOURCE_ENERGY] > 0}).id;
                 } catch (e) {}
             }
             let ruin = Game.getObjectById(creep.memory.ruinToGo);
@@ -49,19 +51,23 @@ var roleBuilder = {
                 if(creep.withdraw(ruin, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
                     creep.moveTo(ruin);
                 }
+            } else if (creep.room.storage && creep.room.storage.store[RESOURCE_ENERGY] > 4000) {
+                if(creep.withdraw(creep.room.storage, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+                    creep.moveTo(creep.room.storage, RESOURCE_ENERGY);
+                }
             } else {
                 let source = Game.getObjectById(creep.memory.sourceToHarv)
                 if(creep.harvest(source) == ERR_NOT_IN_RANGE) {
                     creep.moveTo(source);
                 }
             }
-        }
-        else {
+        } else {
             if (!creep.memory.structToGo) {
                 try {
-                    creep.memory.structToGo = creep.pos.findClosestByRange(FIND_CONSTRUCTION_SITES).id;
+                creep.memory.structToGo = creep.pos.findClosestByRange(FIND_CONSTRUCTION_SITES).id;
                 } catch (e) {}
                 if (!creep.memory.structToGo) {
+                    creep.room.memory.builderSpawned = false;
                     creep.suicide();
                 }
             }

@@ -11,12 +11,13 @@ var roleRepairer = {
             }
         }
 
-        if (creep.carry.energy == creep.carryCapacity) {
+        if (_.sum(creep.store) == creep.store.getCapacity()) {
             creep.memory.harvesting = false 
         }
-        else if (creep.carry.energy == 0) {
+        if (_.sum(creep.store) == 0) {
             creep.memory.harvesting = true
         }
+        
         if (!creep.memory.sourceToHarv) {
             for (let source of creep.room.memory.sources) {
                 let pointsEmpty = 0
@@ -30,7 +31,7 @@ var roleRepairer = {
                         }
                     }
                 }
-                if ((creep.room.find(FIND_MY_CREEPS, {filter: c => (c.memory.sourceToHarv == source.id)}).length) < 2 * pointsEmpty) {
+                if ((creep.room.find(FIND_MY_CREEPS, {filter: c => (c.memory.sourceToHarv == source.id)}).length) < 1 + pointsEmpty) {
                     creep.memory.sourceToHarv = source.id
                     break
                 }
@@ -39,7 +40,7 @@ var roleRepairer = {
         if (creep.memory.harvesting) {
         	if (!creep.memory.ruinToGo && !creep.memory.fuckRuins) {
         		try {
-            		creep.memory.ruinToGo = creep.pos.findClosestByPath(FIND_RUINS, {filter: (r) => r.store[RESOURCE_ENERGY] > 0}).id;
+            	creep.memory.ruinToGo = creep.pos.findClosestByPath(FIND_RUINS, {filter: (r) => r.store[RESOURCE_ENERGY] > 0}).id;
         		} catch (e) {}
         	}
             let ruin = Game.getObjectById(creep.memory.ruinToGo);
@@ -54,6 +55,10 @@ var roleRepairer = {
                 if(creep.withdraw(ruin, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
                     creep.moveTo(ruin);
                 }
+            } else if (creep.room.storage && creep.room.storage.store[RESOURCE_ENERGY] > 4000) {
+                if(creep.withdraw(creep.room.storage, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+                    creep.moveTo(creep.room.storage, RESOURCE_ENERGY);
+                }
             } else {
                 let source = Game.getObjectById(creep.memory.sourceToHarv)
                 if(creep.harvest(source) == ERR_NOT_IN_RANGE) {
@@ -62,18 +67,19 @@ var roleRepairer = {
             }
         } else {
         	if (!creep.memory.structToGo && creep.room.memory.requireRepair) {
-	            let requireRepair = creep.room.memory.requireRepair;
-	            let theStruct = requireRepair[0];
-	            creep.room.memory.requireRepair.shift();
+	            let theStruct = creep.room.memory.requireRepair.shift();
 	            creep.memory.structToGo = theStruct;
         	}
         	let struct = Game.getObjectById(creep.memory.structToGo);
         	if (struct) {
-        		if (((struct.structureType == STRUCTURE_ROAD || struct.structureType == STRUCTURE_CONTAINER) && struct.hits >= struct.hitsMax * 0.8) 
-        			|| ((struct.structureType == STRUCTURE_WALL || struct.structureType == STRUCTURE_RAMPART) && struct.hits >= 20000)) {
-        				delete creep.memory.structToGo;
-        				return
-        			}
+        		let stType = struct.structureType;
+        		if ((stType == STRUCTURE_ROAD || stType == STRUCTURE_CONTAINER) && struct.hits >= struct.hitsMax * 0.7 ||
+        			(stType == STRUCTURE_WALL || stType == STRUCTURE_RAMPART) && 
+                    (struct.room.controller.level >= 5 && struct.hits >= 30000 || struct.room.controller.level < 5 && struct.hits >= struct.room.controller.level * 3000) ||
+        			struct.hits == struct.hitsMax) {
+		        	delete creep.memory.structToGo;
+		        	return
+        		}
         	}
         	if (struct) {
 	            if(creep.repair(struct) == ERR_NOT_IN_RANGE) {
@@ -89,7 +95,7 @@ var roleRepairer = {
 	                    for (let id of roomStructures) {
 	                        str = Game.getObjectById(id);
 	                        let r2 = creep.pos.getRangeTo(str);
-	                        if (r2 < range && str.energy < str.energyCapacity) {
+	                        if (r2 < range && str.store.getFreeCapacity(RESOURCE_ENERGY) > 0) {
 	                            structure = id;
 	                            range = r2;
 	                            sType = str.structureType;
