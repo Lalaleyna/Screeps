@@ -33,7 +33,7 @@ var roleRemoteCreator = {
 			if (!creep.memory.pathCounted)
 				creep.memory.pathCounted = true;
 			if (!creep.memory.sourceToHarv) {
-				creep.memory.sourceToHarv = creep.room.find(FIND_SOURCES)[0].id;
+				creep.memory.sourceToHarv = creep.pos.findClosestByPath(FIND_SOURCES).id;
 			}
 			let source = Game.getObjectById(creep.memory.sourceToHarv);
 			if (!creep.memory.containerPlaced) {

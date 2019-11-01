@@ -18,7 +18,7 @@ StructureSpawn.prototype.spawnHarvester =
             for (let i = 0; i < suit; i++) {
                 body.push(WORK);
                 body.push(CARRY);
-                if(body.length >= 10) {
+                if(body.length >= 12) {
                     break;
                 }
             }
@@ -93,7 +93,7 @@ StructureSpawn.prototype.spawnDistributor =
         var energy = energyLimit;
         var suit = Math.floor((energy) / 150);
         for (let i = 0; i < suit; i++) {
-            body.push(CARRY);    
+            body.push(CARRY);
             body.push(MOVE);
             body.push(CARRY);
             if(body.length >= 24) {
@@ -112,7 +112,7 @@ StructureSpawn.prototype.spawnUpgrader =
             body.push(WORK);
             body.push(MOVE);
             body.push(CARRY);
-            if(body.length >= 30) {
+            if(body.length >= 42) {
                 break;
             }
         }
@@ -154,7 +154,7 @@ StructureSpawn.prototype.spawnRemoteHarvester =
             body.push(WORK);
             body.push(MOVE);
             body.push(CARRY);
-            if(body.length >= 18) {
+            if(body.length >= 21) {
                 break;
             }
         }
@@ -167,10 +167,10 @@ StructureSpawn.prototype.spawnRemoteDistributor =
         var energy = energyLimit;
         var suit = Math.floor((energy) / 150);
         for (let i = 0; i < suit; i++) {
-            body.push(CARRY);    
+            body.push(CARRY);
             body.push(MOVE);
             body.push(CARRY);
-            if(body.length >= 33) {
+            if(body.length >= 36) {
                 break;
             }
         }
@@ -179,10 +179,10 @@ StructureSpawn.prototype.spawnRemoteDistributor =
 }
 
 StructureSpawn.prototype.spawnRemoteProtector =
-    function (energyLimit, targetRoom) {
+    function (energyLimit, targetRoom, superProtector) {
         var body = [];
         var energy = energyLimit;
-        if (energy < 2300 || (targetRoom != 'E20N27' && targetRoom != 'E21N27')) {
+        if (energy < 2300 && superProtector) {
             var suit = Math.floor(energy / 1550);
             for (let i = 0; i < suit; i++) {
                 for (let j = 0; j < 10; j++) {
@@ -221,7 +221,8 @@ StructureSpawn.prototype.spawnRemoteProtector =
                 }
             }
         }
-        return this.spawnCreep(body, 'RemoteProtector' + Game.time, {memory: {role: 'remoteProtector', targetRoom: targetRoom, homeRoom: this.room.name}});
+        return this.spawnCreep(body, 'RemoteProtector' + Game.time, {memory: {role: 'remoteProtector', targetRoom: targetRoom,
+                                                                          homeRoom: this.room.name, superProtector: superProtector}});
 }
 
 StructureSpawn.prototype.spawnRemoteRoadRepairer =
@@ -239,7 +240,7 @@ StructureSpawn.prototype.spawnRemoteRoadRepairer =
             body.push(MOVE);
             body.push(MOVE);
             body.push(MOVE);
-            if (body.length >= 27) 
+            if (body.length >= 27)
                 break;
         }
         return this.spawnCreep(body, 'RemoteRoadRepairer' + Game.time, {memory: {role: 'remoteRoadRepairer',
@@ -268,4 +269,36 @@ StructureSpawn.prototype.spawnSpawnBuilder =
             }
         }
         return this.spawnCreep(body, 'SpawnBuilder' + Game.time, {memory: {role: 'spawnBuilder', targetRoom: targetRoom, homeRoom: this.room.name}});
+}
+
+StructureSpawn.prototype.spawnWallDestroyer =
+    function (energyLimit, targetRoom, wallId) {
+        var body = [];
+        var energy = energyLimit;
+        var suit = Math.floor((energy) / 150);
+        for (let i = 0; i < suit; i++) {
+            body.push(WORK);
+            body.push(MOVE);
+            if(body.length >= 12) {
+                break;
+            }
+        }
+        return this.spawnCreep(body, 'WallDestroyer' + Game.time, {memory: {role: 'wallDestroyer', targetRoom: targetRoom,
+                                                          homeRoom: this.room.name, wall: wallId}});
+}
+
+StructureSpawn.prototype.spawnStorageWorker =
+    function (energyLimit) {
+        var body = [];
+        var energy = energyLimit;
+        var suit = Math.floor((energy) / 150);
+        for (let i = 0; i < suit; i++) {
+            body.push(CARRY);
+            body.push(MOVE);
+            body.push(CARRY);
+            if(body.length >= 15) {
+                break;
+            }
+        }
+        return this.spawnCreep(body, 'StorageWorker' + Game.time, {memory: {role: 'storageWorker'}});
 }

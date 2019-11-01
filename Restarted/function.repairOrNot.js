@@ -8,7 +8,7 @@ function repairOrNot(structure) {
             if (structure.room.controller.level >= 5) {
                 return structure.hits < 20000;
             } else {
-                return structure.room.controller.level * 2000
+                return structure.hits < structure.room.controller.level * 2000
             }
         default:
             return structure.hits < structure.hitsMax;

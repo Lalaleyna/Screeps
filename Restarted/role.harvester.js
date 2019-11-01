@@ -14,15 +14,15 @@ var roleHarvester = {
                     let pointsEmpty = 0
                     let x = source.pos.x - 1
                     let y = source.pos.y - 1
-                    for (let i = x; i <= x + 3; i++) {
-                        for (let j = y; j <= y + 3; j++) { 
+                    for (let i = x; i < x + 3; i++) {
+                        for (let j = y; j < y + 3; j++) {
                             const terrain = new Room.Terrain(creep.room.name);
                             if (terrain.get(i, j) != TERRAIN_MASK_WALL) {
                                 pointsEmpty += 1
                             }
                         }
                     }
-                    if ((creep.room.find(FIND_MY_CREEPS, {filter: c => (c.memory.sourceToHarv == source.id)}).length) < 1 + pointsEmpty) {
+                    if ((creep.room.find(FIND_MY_CREEPS, {filter: c => (c.memory.sourceToHarv == source.id)}).length) < 2 * pointsEmpty) {
                         creep.memory.sourceToHarv = source.id
                         break
                     }
@@ -43,16 +43,16 @@ var roleHarvester = {
                 creep.memory.nearToSource = true
             }
         }
-        
+
         if (_.sum(creep.store) == creep.store.getCapacity()) {
-            creep.memory.harvesting = false 
+            creep.memory.harvesting = false
         }
         if (_.sum(creep.store) == 0) {
             creep.memory.harvesting = true
         }
 
 	    if (creep.memory.harvesting) {
-            if (creep.room.storage && creep.room.storage.store[RESOURCE_ENERGY] > 0) {
+            if (creep.room.storage && creep.room.storage.store[RESOURCE_ENERGY] > 0 && creep.room.controller.level < 4) {
                 if (creep.withdraw(creep.room.storage, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
                     creep.moveTo(creep.room.storage);
                 }
@@ -60,7 +60,7 @@ var roleHarvester = {
                 if (!creep.memory.ruinToGo && !creep.memory.fuckRuins) {
                     try {
                         creep.memory.ruinToGo = creep.pos.findClosestByPath(FIND_RUINS, {filter: (r) => r.store[RESOURCE_ENERGY] > 0}).id;
-                    } catch (e) {}        
+                    } catch (e) {}
                 }
                 let ruin = Game.getObjectById(creep.memory.ruinToGo);
                 if (!ruin) {
@@ -90,7 +90,7 @@ var roleHarvester = {
             }
         } else if (!creep.room.memory.lvl4Ready) {
             if (!creep.memory.spawningStruct && creep.room.memory.roomStructures) {
-                let roomStructures = creep.room.memory.roomStructures[STRUCTURE_SPAWN].concat(creep.room.memory.roomStructures[STRUCTURE_EXTENSION], 
+                let roomStructures = creep.room.memory.roomStructures[STRUCTURE_SPAWN].concat(creep.room.memory.roomStructures[STRUCTURE_EXTENSION],
                                         creep.room.memory.roomStructures[STRUCTURE_TOWER]);
                 if (roomStructures) {
                     let sType = null;

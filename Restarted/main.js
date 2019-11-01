@@ -18,7 +18,9 @@ module.exports.loop = function () {
     for (var name in Game.creeps) {
         Game.creeps[name].runRole();
     }
-    
+
+    if (!Memory.cpu)
+      Memory.cpu = {creeps: {used: 0, counter: 0, average: 0}}
     Memory.cpu.creeps.used = Number((Memory.cpu.creeps.used + Game.cpu.getUsed() - time).toFixed(4));
     Memory.cpu.creeps.counter += 1;
     if (Memory.cpu.creeps.counter >= 100) {

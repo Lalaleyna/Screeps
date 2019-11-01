@@ -12,6 +12,21 @@ function globalRoomFunction(room) {
 		room.memory.creepsToSpawn = []
 	}
 
+	if (!room.memory.energy && room.storage)
+		room.memory.energy = {past: room.storage.store[RESOURCE_ENERGY], present: room.storage.store[RESOURCE_ENERGY], difference: 0, counter: 0}
+	if (room.storage)
+		room.memory.energy.counter++;
+	if (room.storage && room.memory.energy && room.memory.energy.counter >= 500) {
+		room.memory.energy.counter = 0;
+		room.memory.energy.past = room.memory.energy.present;
+		room.memory.energy.present = room.storage.store[RESOURCE_ENERGY];
+		room.memory.energy.difference = room.memory.energy.present - room.memory.energy.past
+		if (room.memory.energy.difference >= 0)
+			console.log('Storage statistics (' + room.name + '): ' + room.memory.energy.difference + ' units. POSITIVE');
+		else
+			console.log('Storage statistics (' + room.name + '): ' + room.memory.energy.difference + ' units. NEGATIVE');
+	}
+
 	const tombstones = room.find(FIND_TOMBSTONES);
 	const tombstonesIds = [];
 	for (let tombstone of tombstones) {
@@ -22,7 +37,7 @@ function globalRoomFunction(room) {
 	room.memory.tombstones = tombstonesIds;
 
 	if (Game.time % 7 == 0) {
-		const structures = room.find(FIND_MY_STRUCTURES); 
+		const structures = room.find(FIND_STRUCTURES);
 		const roomStructures = {};
 		const requireRepair = [];
 		for (const element of structures) {
@@ -45,7 +60,7 @@ function globalRoomFunction(room) {
 				for (let rId of remote) {
 					let road = Game.getObjectById(rId);
 					if (road && repairOrNot(road)) {
-						room.memory.creepsToSpawn.push({role: 'remoteRoadRepairer', 
+						room.memory.creepsToSpawn.push({role: 'remoteRoadRepairer',
 							roadToRepair: {id: rId, room: road.room.name}, remoteName: remoteName});
 						room.memory.roadRepairerSpawned = true;
 						break
@@ -64,7 +79,7 @@ function globalRoomFunction(room) {
 				if (remote.length) {
 					let road = Game.getObjectById(remote[0]);
 					if (road) {
-						room.memory.creepsToSpawn.push({role: 'remoteRoadRepairer', 
+						room.memory.creepsToSpawn.push({role: 'remoteRoadRepairer',
 							roadToBuild: {id: remote[0], room: road.pos.roomName, pos: road.pos}, remoteName: remoteName});
 						room.memory.roadRepairerSpawned = true;
 						break
@@ -86,6 +101,7 @@ function globalRoomFunction(room) {
 	if (!room.memory.mainLinkId && room.memory.lvl5Ready) {
 		room.memory.mainLinkId = room.storage.pos.findClosestByRange(FIND_STRUCTURES, {filter: (s) => s.structureType == STRUCTURE_LINK}).id;
 	}
+
 	if (room.memory.roomStructures && room.memory.roomStructures[STRUCTURE_LINK]) {
 		for (let linkId of room.memory.roomStructures[STRUCTURE_LINK]) {
 			let mainLink = Game.getObjectById(room.memory.mainLinkId);
@@ -93,7 +109,7 @@ function globalRoomFunction(room) {
 				continue;
 			} else {
 				let link = Game.getObjectById(linkId);
-				if (link.store[RESOURCE_ENERGY] == link.store.getCapacity(RESOURCE_ENERGY) && 
+				if (link.store[RESOURCE_ENERGY] == link.store.getCapacity(RESOURCE_ENERGY) &&
 					mainLink.store.getFreeCapacity(RESOURCE_ENERGY) == mainLink.store.getCapacity(RESOURCE_ENERGY)) {
 					link.transferEnergy(mainLink);
 				}
@@ -102,7 +118,8 @@ function globalRoomFunction(room) {
 	}
 
 	if (!room.memory.lvl4Ready && room.controller.level >= 4) {
-		if (!room.memory.lvl4Creeps && room.memory.creepsToSpawn) {
+		if (!room.memory.lvl4Creeps && room.memory.creepsToSpawn && room.storage &&
+					room.memory.roomStructures[STRUCTURE_CONTAINER].length >= room.memory.sources.length) {
 			room.memory.creepsToSpawn.push({role: 'distributor'}, {role: 'distributor'}, {role: 'upgrader'});
 			room.memory.lvl4Creeps = true
 		}
@@ -130,6 +147,11 @@ function globalRoomFunction(room) {
 		if (links && links.length >= 3 || (room.memory.lvl5Ready && room.memory.sources.length == 1)) {
 			room.memory.lvl6Ready = true
 		}
+	}
+
+	if (room.memory.lvl6Ready && !room.memory.lvl6Creeps) {
+		room.memory.creepsToSpawn.push({role: 'storageWorker'});
+		room.memory.lvl6Creeps = true;
 	}
 
 	let hostileCreeps = room.find(FIND_HOSTILE_CREEPS);
@@ -164,7 +186,7 @@ function globalRoomFunction(room) {
 			}
 		}
 	}
-			
+
 	if (!room.memory.creepsToSpawn) {
 		room.memory.creepsToSpawn = []
 	}
@@ -180,7 +202,9 @@ function globalRoomFunction(room) {
 					let roadToBuild = creepInfo.roadToBuild;
 					let roadToRepair = creepInfo.roadToRepair;
 					let roomName = creepInfo.roomName;
+					let wallId = creepInfo.wall;
 					let energyLimit = room.energyCapacityAvailable;
+					let superProtector = creepInfo.superProtector;
 					if (room.controller.level > 6) {
 						energyLimit /= 2;
 					}
@@ -195,6 +219,8 @@ function globalRoomFunction(room) {
 						spawn.spawnRepairer(energyLimit)
 					} else if (role == 'distributor') {
 						spawn.spawnDistributor(energyLimit)
+					} else if (role == 'storageWorker') {
+						spawn.spawnStorageWorker(energyLimit)
 					} else if (role == 'upgrader') {
 						spawn.spawnUpgrader(energyLimit)
 					} else if (role == 'remoteCreator') {
@@ -206,14 +232,16 @@ function globalRoomFunction(room) {
 					} else if (role == 'remoteRoadRepairer') {
 						spawn.spawnRemoteRoadRepairer(energyLimit, roadToBuild, roadToRepair, roomName);
 					} else if (role == 'remoteProtector') {
-						spawn.spawnRemoteProtector(energyLimit, targetRoom);
+						spawn.spawnRemoteProtector(energyLimit, targetRoom, superProtector);
 					} else if (role == 'reserver') {
 						spawn.spawnReserver(energyLimit, targetRoom);
 					} else if (role == 'claimer') {
 						spawn.spawnClaimer(energyLimit, targetRoom);
+					} else if (role == 'wallDestroyer') {
+						spawn.spawnWallDestroyer(energyLimit, targetRoom, wallId);
 					} else if (role == 'spawnBuilder') {
 						spawn.spawnSpawnBuilder(energyLimit, targetRoom);
-					} 
+					}
 					room.memory.creepsToSpawn.shift()
 					break
 				}

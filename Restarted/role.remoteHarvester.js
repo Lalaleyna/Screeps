@@ -32,7 +32,7 @@ var roleRemoteHarvester = {
 			if (!creep.memory.pathCounted)
 				creep.memory.pathCounted = true;
 			if (!creep.memory.sourceToHarv) {
-				creep.memory.sourceToHarv = creep.room.find(FIND_SOURCES)[0].id;
+				creep.memory.sourceToHarv = creep.pos.findClosestByPath(FIND_SOURCES).id;
 			}
 			if (!creep.memory.container) {
 				creep.memory.container = creep.room.find(FIND_STRUCTURES, {filter: (s) => s.structureType == STRUCTURE_CONTAINER})[0].id;
@@ -62,7 +62,7 @@ var roleRemoteHarvester = {
 				}
 			}
 		}
-		
+
 	}
 }
 

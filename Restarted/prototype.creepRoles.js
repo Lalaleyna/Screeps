@@ -11,7 +11,9 @@ const ROLES = {
     remoteProtector: require('role.remoteProtector'),
     remoteRoadRepairer: require('role.remoteRoadRepairer'),
     spawnBuilder: require('role.spawnBuilder'),
-    claimer: require('role.claimer')
+    claimer: require('role.claimer'),
+    wallDestroyer: require('role.wallDestroyer'),
+    storageWorker: require('role.storageWorker')
 };
 
 Creep.prototype.runRole =

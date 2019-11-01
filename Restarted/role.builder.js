@@ -7,25 +7,25 @@ var roleBuilder = {
 			}
 		}
         if (!creep.memory.sourceToHarv) {
-            for (let source of creep.room.memory.sources) {
-                let pointsEmpty = 0
-                let x = source.pos.x - 1
-                let y = source.pos.y - 1
-                for (let i = x; i <= x + 3; i++) {
-                    for (let j = y; j <= y + 3; j++) { 
-                        const terrain = new Room.Terrain(creep.room.name);
-                        if (terrain.get(i, j) != TERRAIN_MASK_WALL) {
-                            pointsEmpty += 1
-                        }
-                    }
-                }
-                if ((creep.room.find(FIND_MY_CREEPS, {filter: c => (c.memory.sourceToHarv == source.id)}).length) < 1 + pointsEmpty) {
-                    creep.memory.sourceToHarv = source.id
-                    break
-                }
-            }
+					for (let source of creep.room.memory.sources) {
+							let pointsEmpty = 0
+							let x = source.pos.x - 1
+							let y = source.pos.y - 1
+							for (let i = x; i < x + 3; i++) {
+									for (let j = y; j < y + 3; j++) {
+											const terrain = new Room.Terrain(creep.room.name);
+											if (terrain.get(i, j) != TERRAIN_MASK_WALL) {
+													pointsEmpty += 1
+											}
+									}
+							}
+							if ((creep.room.find(FIND_MY_CREEPS, {filter: c => (c.memory.sourceToHarv == source.id)}).length) < 2 * pointsEmpty) {
+									creep.memory.sourceToHarv = source.id
+									break
+							}
+					}
         }
-        
+
         if (_.sum(creep.store) == creep.store.getCapacity()) {
             creep.memory.building = true
         }
@@ -83,4 +83,4 @@ var roleBuilder = {
 	}
 }
 
-module.exports = roleBuilder; 
+module.exports = roleBuilder;

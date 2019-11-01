@@ -41,7 +41,7 @@ var roleSpawnBuilder = {
 			}
 			if (!creep.memory.cSite) {
 				if (!creep.room.memory.creepsToSpawn.length) {
-					creep.room.memory.creepsToSpawn.push({role: 'harvester'}, {role: 'harvester'}, {role: 'repairer'});
+					creep.room.memory.creepsToSpawn.push({role: 'harvester'}, {role: 'harvester'}, {role: 'repairer'}, {role: 'repairer'});
 				}
 			}
 
@@ -60,7 +60,7 @@ var roleSpawnBuilder = {
 			if (creep.memory.building == false) {
 	            if (!creep.memory.ruinToGo && !creep.memory.fuckRuins) {
 	                try {
-	                creep.memory.ruinToGo = creep.pos.findClosestByPath(FIND_RUINS, {filter: (r) => r.store[RESOURCE_ENERGY] > 0}).id;
+	                	creep.memory.ruinToGo = creep.pos.findClosestByPath(FIND_RUINS, {filter: (r) => r.store[RESOURCE_ENERGY] > 0}).id;
 	                } catch (e) {}
 	            }
 	            let ruin = Game.getObjectById(creep.memory.ruinToGo);
@@ -87,14 +87,14 @@ var roleSpawnBuilder = {
 	            }
 	        } else {
 	            if (!creep.memory.cSite) {
-	            	let building = creep.pos.findClosestByPath(FIND_STURCTURES, {filter: (s) => s.structureType == STRUCTURE_SPAWN}).id;
+	            	let building = creep.pos.findClosestByPath(FIND_STRUCTURES, {filter: (s) => s.structureType == STRUCTURE_SPAWN});
 	            	if (_.sum(building.store) == building.store.getCapacity(RESOURCE_ENERGY)) {
 	            		creep.suicide();
 	            	} else {
-			        	if (creep.transfer(building, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-			        		creep.moveTo(building);
-			        	}
-		        	}
+				        	if (creep.transfer(building, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+				        		creep.moveTo(building);
+				        	}
+		        		}
 	            } else {
 		        	let building = Game.getObjectById(creep.memory.cSite)
 		            if (!building) {
